@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuraRank Ultimate FULL</title>
+
+<style>
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:
+    radial-gradient(circle at top,#1a0033 0%,transparent 40%),
+    radial-gradient(circle at bottom,#001a33 0%,transparent 40%),
+    #05060a;
+  color:#fff;
+}
+
+.app{
+  max-width:420px;
+  margin:auto;
+  padding:16px;
+}
+
+.header{
+  text-align:center;
+  padding:16px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(0,255,255,0.1);
+  backdrop-filter: blur(10px);
+  transition:.15s;
+}
+
+#avatar{
+  font-size:80px;
+}
+
+.avatarFX{
+  animation:pop .35s;
+}
+
+@keyframes pop{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.4);}
+  100%{transform:scale(1);}
+}
+
+.aura{font-size:2rem;color:#00fff7;font-weight:700;}
+.rank{color:#ff4dff;}
+.level{color:#aaa;}
+
+.progress{
+  height:8px;
+  background:#111;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#00fff7,#7c5cff,#ff4dff);
+  transition:.3s;
+}
+
+.card{
+  margin-top:14px;
+  padding:16px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(0,255,255,0.08);
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  margin-top:10px;
+  font-weight:bold;
+  background:linear-gradient(90deg,#7c5cff,#00fff7);
+  color:white;
+}
+
+.rarity{
+  margin-top:8px;
+  font-size:.85rem;
+}
+
+.common{color:#aaa;}
+.rare{color:#4da3ff;}
+.epic{color:#b84dff;}
+.legendary{color:#ffd700;}
+.mythic{color:#ff4d6d;text-shadow:0 0 10px #ff4d6d;}
+
+.float{
+  position:fixed;
+  left:50%;
+  top:45%;
+  transform:translateX(-50%);
+  font-size:3rem;
+  opacity:0;
+  transition:.3s;
+}
+
+.float.show{
+  opacity:1;
+  transform:translate(-50%,-80px);
+}
+
+.skins{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+}
+
+.skin{
+  font-size:2rem;
+  opacity:.5;
+  cursor:pointer;
+}
+
+.skin.active{
+  opacity:1;
+  transform:scale(1.3);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="header" id="header">
+  <div id="avatar">😐</div>
+  <div class="aura" id="aura">0 ✨</div>
+  <div class="rank" id="rank">Iniciante</div>
+  <div class="level" id="level">Nível 1</div>
+
+  <div class="progress">
+    <div class="bar" id="bar"></div>
+  </div>
+</div>
+
+<div class="card">
+  <button onclick="newQuest()">🎲 Nova missão</button>
+  <button onclick="completeQuest()">⚡ Completar missão</button>
+  <button onclick="lootBox()">🎁 Loot Box</button>
+
+  <div id="qTitle"></div>
+  <div id="qDesc"></div>
+  <div id="rarity" class="rarity"></div>
+</div>
+
+<div class="card">
+  <h3>🎭 Skins</h3>
+  <div class="skins" id="skins"></div>
+</div>
+
+<div class="card">
+  <h3>🏆 Ranking</h3>
+  <div id="board"></div>
+</div>
+
+</div>
+
+<div class="float" id="float"></div>
+
+<script>
+
+// ================= STATE =================
+let aura = Number(localStorage.getItem("aura") || 0);
+let skin = localStorage.getItem("skin") || "😐";
+
+let baseSkins = ["😐","😎","🔥","💀","👑","🌌","💎","🚀","🧠","🔮","⚡","🌀"];
+let skins = JSON.parse(localStorage.getItem("skins") || "null");
+
+if(!skins) skins = baseSkins.slice();
+
+let current = null;
+
+// ================= AUDIO =================
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq,dur){
+ let o = ctx.createOscillator();
+ let g = ctx.createGain();
+
+ o.connect(g);
+ g.connect(ctx.destination);
+
+ o.frequency.value = freq;
+ o.start();
+
+ g.gain.setValueAtTime(0.2,ctx.currentTime);
+ g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+
+ o.stop(ctx.currentTime+dur);
+}
+
+// ================= VIBRATION =================
+function vib(ms){
+ if(navigator.vibrate) navigator.vibrate(ms);
+}
+
+// ================= RANK =================
+function getRank(a){
+ if(a<200) return "🥉 Iniciante";
+ if(a<500) return "🥈 Jogador";
+ if(a<1000) return "🥇 Mestre";
+ if(a<2000) return "💎 Elite";
+ return "👑 Transcendente";
+}
+
+// ================= QUEST =================
+const actions=["ignorar","sumir","controlar","ghostar","analisar","quebrar padrão"];
+const places=["chat","grupo","call","vida real"];
+
+function roll(){
+ let r=Math.random();
+ if(r<0.5) return "common";
+ if(r<0.75) return "rare";
+ if(r<0.9) return "epic";
+ if(r<0.97) return "legendary";
+ return "mythic";
+}
+
+function gen(){
+ return {
+  t:`⚡ ${actions[Math.random()*actions.length|0]} ${places[Math.random()*places.length|0]}`,
+  d:"o sistema reage à sua presença",
+  a:20+Math.random()*80|0,
+  r:roll()
+ };
+}
+
+// ================= QUEST =================
+function newQuest(){
+ current = gen();
+
+ document.getElementById("qTitle").innerText = current.t;
+ document.getElementById("qDesc").innerText = current.d;
+
+ let r = document.getElementById("rarity");
+ r.innerText = current.r.toUpperCase();
+ r.className = "rarity "+current.r;
+}
+
+// ================= COMPLETE =================
+function completeQuest(){
+ if(!current) return;
+
+ aura += current.a;
+
+ drop();
+ shake();
+ vib(50);
+
+ update();
+
+ if(current.r==="mythic") beep(900,0.2);
+ else if(current.r==="legendary") beep(700,0.15);
+ else if(current.r==="epic") beep(500,0.1);
+ else beep(300,0.08);
+}
+
+// ================= LOOT =================
+function drop(){
+ let pool = baseSkins;
+ let item = pool[Math.random()*pool.length|0];
+
+ let f = document.getElementById("float");
+ f.innerText = item;
+ f.classList.add("show");
+
+ setTimeout(()=>f.classList.remove("show"),600);
+
+ if(!skins.includes(item)) skins.push(item);
+}
+
+// ================= LOOT BOX =================
+function lootBox(){
+ let item = baseSkins[Math.random()*baseSkins.length|0];
+
+ aura += 50;
+
+ if(!skins.includes(item)) skins.push(item);
+
+ vib(120);
+ beep(600,0.12);
+
+ update();
+}
+
+// ================= FX =================
+function shake(){
+ let h = document.getElementById("header");
+ h.style.transform = "translateX(-4px)";
+ setTimeout(()=>h.style.transform="translateX(4px)",80);
+ setTimeout(()=>h.style.transform="translateX(0px)",160);
+}
+
+function avatarFX(){
+ let a = document.getElementById("avatar");
+ a.classList.add("avatarFX");
+ setTimeout(()=>a.classList.remove("avatarFX"),350);
+}
+
+// ================= SKINS =================
+function renderSkins(){
+ let el = document.getElementById("skins");
+ el.innerHTML = "";
+
+ skins.forEach(s=>{
+  let e = document.createElement("span");
+  e.innerText = s;
+  e.className = "skin"+(s===skin?" active":"");
+
+  e.onclick = ()=>{
+   skin = s;
+   avatarFX();
+   update();
+  };
+
+  el.appendChild(e);
+ });
+}
+
+// ================= BOARD =================
+function board(){
+ let list = [
+  {n:"NeonX",a:9999},
+  {n:"Void",a:5000},
+  {n:"You",a:aura},
+  {n:"Shadow",a:3000}
+ ];
+
+ document.getElementById("board").innerHTML =
+ list.sort((a,b)=>b.a-a.a)
+ .map(x=>"⚡ "+x.n+" - "+x.a)
+ .join("<br>");
+}
+
+// ================= UPDATE =================
+function update(){
+
+ let lvl = Math.floor(aura/100)+1;
+
+ document.getElementById("aura").innerText = aura+" ✨";
+ document.getElementById("level").innerText = "Nível "+lvl;
+ document.getElementById("rank").innerText = getRank(aura);
+ document.getElementById("bar").style.width = (aura%100)+"%";
+ document.getElementById("avatar").innerText = skin;
+
+ localStorage.setItem("aura",aura);
+ localStorage.setItem("skin",skin);
+ localStorage.setItem("skins",JSON.stringify(skins));
+
+ renderSkins();
+ board();
+}
+
+// INIT
+update();
+
+</script>
+
+</body>
+</html>
