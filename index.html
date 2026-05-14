@@ -10,11 +10,26 @@
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  color:#fff;
+  transition:1s;
   background:
     radial-gradient(circle at top,#1a0033 0%,transparent 40%),
     radial-gradient(circle at bottom,#001a33 0%,transparent 40%),
     #05060a;
-  color:#fff;
+}
+
+body.god{
+  background:
+    radial-gradient(circle at top,#00fff7 0%,transparent 40%),
+    radial-gradient(circle at bottom,#7c5cff 0%,transparent 40%),
+    #000;
+}
+
+body.legend{
+  background:
+    radial-gradient(circle at top,#ffcc00 0%,transparent 40%),
+    radial-gradient(circle at bottom,#ff0066 0%,transparent 40%),
+    #05060a;
 }
 
 .app{
@@ -30,16 +45,15 @@ body{
   background:rgba(255,255,255,0.03);
   border:1px solid rgba(0,255,255,0.1);
   backdrop-filter: blur(10px);
-  transition:.15s;
+  transition:.2s;
 }
 
 #avatar{
   font-size:80px;
+  transition:.3s;
 }
 
-.avatarFX{
-  animation:pop .35s;
-}
+.avatarFX{animation:pop .35s;}
 
 @keyframes pop{
   0%{transform:scale(1);}
@@ -93,8 +107,14 @@ button{
 .common{color:#aaa;}
 .rare{color:#4da3ff;}
 .epic{color:#b84dff;}
-.legendary{color:#ffd700;}
-.mythic{color:#ff4d6d;text-shadow:0 0 10px #ff4d6d;}
+.legendary{
+  color:#ffd700;
+  text-shadow:0 0 10px #ffd700;
+}
+.mythic{
+  color:#ff4d6d;
+  text-shadow:0 0 12px #ff4d6d;
+}
 
 .float{
   position:fixed;
@@ -122,11 +142,13 @@ button{
   font-size:2rem;
   opacity:.5;
   cursor:pointer;
+  transition:.2s;
 }
 
 .skin.active{
   opacity:1;
-  transform:scale(1.3);
+  transform:scale(1.4);
+  filter:drop-shadow(0 0 10px #00fff7);
 }
 
 </style>
@@ -148,9 +170,9 @@ button{
 </div>
 
 <div class="card">
-  <button onclick="newQuest()">🎲 Nova missão</button>
-  <button onclick="completeQuest()">⚡ Completar missão</button>
-  <button onclick="lootBox()">🎁 Loot Box</button>
+  <button onclick="newQuest()"> Nova missão</button>
+  <button onclick="completeQuest()"> Completar missão</button>
+  <button onclick="lootBox()"> Loot Box</button>
 
   <div id="qTitle"></div>
   <div id="qDesc"></div>
@@ -158,7 +180,7 @@ button{
 </div>
 
 <div class="card">
-  <h3>🎭 Skins</h3>
+  <h3> Skins</h3>
   <div class="skins" id="skins"></div>
 </div>
 
@@ -177,9 +199,18 @@ button{
 let aura = Number(localStorage.getItem("aura") || 0);
 let skin = localStorage.getItem("skin") || "😐";
 
-let baseSkins = ["😐","😎","🔥","💀","👑","🌌","💎","🚀","🧠","🔮","⚡","🌀"];
-let skins = JSON.parse(localStorage.getItem("skins") || "null");
+let baseSkins = [
+"😐","😎","🔥","💀","👑","🌌","💎","🚀","🧠","🔮","⚡","🌀",
+"🍌💦","🛸","👀","☣","👤","🤯","🔎","📜","🇧🇷","🛡","🏹","🗡",
+"🐉","🦊","🐺","⚔️","🦈","🐍","🐙","🦾","🦿","👾",
+"💠","🎸","🐏","😵","😈","🦖","💾","🫡","☠️","🤖",
+"☀","🌙","⭐","🌟","🥚","🌪","🍩","❄","💫",
+"🧊","🌊","🌋","🪐","🌍","🌑","🗿","🧬",
+"⚙","🔧","🔩","🧲","📡","🛰","💻",
+"💰","🎯","🎲","🎮","🕹","🧩","🏆","🥇","🥈","🥉"
+];
 
+let skins = JSON.parse(localStorage.getItem("skins") || "null");
 if(!skins) skins = baseSkins.slice();
 
 let current = null;
@@ -187,26 +218,18 @@ let current = null;
 // ================= AUDIO =================
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-function beep(freq,dur){
- let o = ctx.createOscillator();
- let g = ctx.createGain();
-
- o.connect(g);
- g.connect(ctx.destination);
-
- o.frequency.value = freq;
+function beep(f,d){
+ let o=ctx.createOscillator();
+ let g=ctx.createGain();
+ o.connect(g);g.connect(ctx.destination);
+ o.frequency.value=f;
  o.start();
-
  g.gain.setValueAtTime(0.2,ctx.currentTime);
- g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
-
- o.stop(ctx.currentTime+dur);
+ g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);
+ o.stop(ctx.currentTime+d);
 }
 
-// ================= VIBRATION =================
-function vib(ms){
- if(navigator.vibrate) navigator.vibrate(ms);
-}
+function vib(ms){if(navigator.vibrate) navigator.vibrate(ms);}
 
 // ================= RANK =================
 function getRank(a){
@@ -218,8 +241,8 @@ function getRank(a){
 }
 
 // ================= QUEST =================
-const actions=["ignorar","sumir","controlar","ghostar","analisar","quebrar padrão"];
-const places=["chat","grupo","call","vida real"];
+const actions=["ignorar","sumir","controlar","ghostar","analisar","quebrar padrão","moggar"];
+const places=["chat","betas","grupo","call","vida real"];
 
 function roll(){
  let r=Math.random();
@@ -233,7 +256,7 @@ function roll(){
 function gen(){
  return {
   t:`⚡ ${actions[Math.random()*actions.length|0]} ${places[Math.random()*places.length|0]}`,
-  d:"o sistema reage à sua presença",
+  d:"farme muita aura",
   a:20+Math.random()*80|0,
   r:roll()
  };
@@ -241,121 +264,100 @@ function gen(){
 
 // ================= QUEST =================
 function newQuest(){
- current = gen();
-
- document.getElementById("qTitle").innerText = current.t;
- document.getElementById("qDesc").innerText = current.d;
-
- let r = document.getElementById("rarity");
- r.innerText = current.r.toUpperCase();
- r.className = "rarity "+current.r;
+ current=gen();
+ qTitle.innerText=current.t;
+ qDesc.innerText=current.d;
+ rarity.innerText=current.r.toUpperCase();
+ rarity.className="rarity "+current.r;
 }
 
 // ================= COMPLETE =================
 function completeQuest(){
- if(!current) return;
-
- aura += current.a;
-
+ if(!current)return;
+ aura+=current.a;
  drop();
  shake();
  vib(50);
-
  update();
-
- if(current.r==="mythic") beep(900,0.2);
- else if(current.r==="legendary") beep(700,0.15);
- else if(current.r==="epic") beep(500,0.1);
+ if(current.r==="mythic")beep(900,0.2);
+ else if(current.r==="legendary")beep(700,0.15);
  else beep(300,0.08);
 }
 
-// ================= LOOT =================
+// ================= DROP =================
 function drop(){
- let pool = baseSkins;
- let item = pool[Math.random()*pool.length|0];
-
- let f = document.getElementById("float");
- f.innerText = item;
- f.classList.add("show");
-
- setTimeout(()=>f.classList.remove("show"),600);
-
- if(!skins.includes(item)) skins.push(item);
+ let item=baseSkins[Math.random()*baseSkins.length|0];
+ float.innerText="✨ "+item;
+ float.classList.add("show");
+ setTimeout(()=>float.classList.remove("show"),600);
+ if(!skins.includes(item)){
+  skins.push(item);
+  aura+=15;
+  vib(40);
+  beep(700,0.08);
+ }
 }
 
-// ================= LOOT BOX =================
+// ================= LOOT =================
 function lootBox(){
- let item = baseSkins[Math.random()*baseSkins.length|0];
-
- aura += 50;
-
- if(!skins.includes(item)) skins.push(item);
-
+ let item=baseSkins[Math.random()*baseSkins.length|0];
+ aura+=50;
+ if(!skins.includes(item))skins.push(item);
  vib(120);
  beep(600,0.12);
-
  update();
 }
 
 // ================= FX =================
 function shake(){
- let h = document.getElementById("header");
- h.style.transform = "translateX(-4px)";
- setTimeout(()=>h.style.transform="translateX(4px)",80);
- setTimeout(()=>h.style.transform="translateX(0px)",160);
+ header.style.transform="translateX(-4px)";
+ setTimeout(()=>header.style.transform="translateX(4px)",80);
+ setTimeout(()=>header.style.transform="translateX(0px)",160);
 }
 
 function avatarFX(){
- let a = document.getElementById("avatar");
- a.classList.add("avatarFX");
- setTimeout(()=>a.classList.remove("avatarFX"),350);
+ avatar.classList.add("avatarFX");
+ setTimeout(()=>avatar.classList.remove("avatarFX"),350);
 }
 
 // ================= SKINS =================
 function renderSkins(){
- let el = document.getElementById("skins");
- el.innerHTML = "";
-
+ skinsDiv.innerHTML="";
  skins.forEach(s=>{
-  let e = document.createElement("span");
-  e.innerText = s;
-  e.className = "skin"+(s===skin?" active":"");
-
-  e.onclick = ()=>{
-   skin = s;
+  let e=document.createElement("span");
+  e.innerText=s;
+  e.className="skin"+(s===skin?" active":"");
+  e.onclick=()=>{
+   skin=s;
    avatarFX();
    update();
   };
-
-  el.appendChild(e);
+  skinsDiv.appendChild(e);
  });
-}
-
-// ================= BOARD =================
-function board(){
- let list = [
-  {n:"NeonX",a:9999},
-  {n:"Void",a:5000},
-  {n:"You",a:aura},
-  {n:"Shadow",a:3000}
- ];
-
- document.getElementById("board").innerHTML =
- list.sort((a,b)=>b.a-a.a)
- .map(x=>"⚡ "+x.n+" - "+x.a)
- .join("<br>");
 }
 
 // ================= UPDATE =================
 function update(){
 
- let lvl = Math.floor(aura/100)+1;
+ let lvl=Math.floor(aura/100)+1;
 
- document.getElementById("aura").innerText = aura+" ✨";
- document.getElementById("level").innerText = "Nível "+lvl;
- document.getElementById("rank").innerText = getRank(aura);
- document.getElementById("bar").style.width = (aura%100)+"%";
- document.getElementById("avatar").innerText = skin;
+ // secret skins
+ if(aura>300&&!skins.includes("🌌"))skins.push("🌌");
+ if(aura>600&&!skins.includes("👑"))skins.push("👑");
+ if(aura>1000&&!skins.includes("⚡"))skins.push("⚡");
+ if(aura>1500&&!skins.includes("🧠"))skins.push("🧠");
+ if(aura>2500&&!skins.includes("💠"))skins.push("💠");
+
+ auraEl.innerText=aura+" ✨";
+ level.innerText="Nível "+lvl;
+ rank.innerText=getRank(aura);
+ bar.style.width=(aura%100)+"%";
+ avatar.innerText=skin;
+
+ // backgrounds
+ document.body.classList.remove("god","legend");
+ if(aura>2000)document.body.classList.add("god");
+ else if(aura>800)document.body.classList.add("legend");
 
  localStorage.setItem("aura",aura);
  localStorage.setItem("skin",skin);
@@ -365,6 +367,33 @@ function update(){
  board();
 }
 
+// ================= BOARD =================
+function board(){
+ let list=[
+  {n:"NeonX",a:999999},
+  {n:"Void",a:5000},
+  {n:"You",a:aura},
+  {n:"Shadow",a:3000}
+ ];
+ boardDiv.innerHTML=list.sort((a,b)=>b.a-a.a)
+ .map(x=>"⚡ "+x.n+" - "+x.a)
+ .join("<br>");
+}
+
+// INIT refs
+const avatar=document.getElementById("avatar");
+const auraEl=document.getElementById("aura");
+const rank=document.getElementById("rank");
+const level=document.getElementById("level");
+const bar=document.getElementById("bar");
+const skinsDiv=document.getElementById("skins");
+const boardDiv=document.getElementById("board");
+const header=document.getElementById("header");
+const float=document.getElementById("float");
+const qTitle=document.getElementById("qTitle");
+const qDesc=document.getElementById("qDesc");
+const rarity=document.getElementById("rarity");
+
 // INIT
 update();
 
@@ -372,3 +401,59 @@ update();
 
 </body>
 </html>
+  <div class="card">
+  <h3>🔐 Código secreto</h3>
+  <input id="secretCode" placeholder="Digite o código..." style="width:100%;padding:12px;border-radius:10px;border:none;outline:none;margin-top:8px;">
+  <button onclick="checkSecret()">Ativar</button>
+  <div id="secretMsg" style="margin-top:8px;font-size:.9rem;opacity:.8;"></div>
+</div>
+
+<script>
+let unlocked = false;
+
+// 🔥 TROQUE AQUI POR LINKS DIRETOS (.jpg / .png)
+const THEME_IMG = "";
+const PROFILE_IMG = "";
+
+function checkSecret(){
+  const v = document.getElementById("secretCode").value.trim().toUpperCase();
+  const msg = document.getElementById("secretMsg");
+
+  if(v === "CHICOGAVIÃO" && !unlocked){
+    unlocked = true;
+
+    // 💥 MAX AURA ABSOLUTO (limite do jogo)
+    aura = Number.MAX_SAFE_INTEGER;
+
+    // 🎨 TEMA MARROM ESTILIZADO
+document.body.style.backgroundImage = `
+  radial-gradient(circle at top, #6b3b1f 0%, transparent 55%),
+  radial-gradient(circle at bottom, #2a140a 0%, transparent 55%),
+  linear-gradient(180deg, #120805, #3b1f12)
+`;
+
+document.body.style.backgroundSize = "cover";
+document.body.style.backgroundPosition = "center";
+document.body.style.backgroundAttachment = "fixed";
+
+    // 🧠 AVATAR EXCLUSIVO
+    document.getElementById("avatar").innerHTML =
+      `<img src="${PROFILE_IMG}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #fff;">`;
+
+    // ✨ efeito visual absurdo
+    document.getElementById("header").style.boxShadow =
+      "0 0 40px rgba(255,255,255,0.5)";
+
+    document.getElementById("header").style.transform = "scale(1.02)";
+
+    msg.innerText = "🔥 CHICOGAVIÃO ATIVADO — MODO ABSOLUTO";
+
+    update(); // atualiza o jogo inteiro
+
+  } else if(unlocked){
+    msg.innerText = "⚠ Já está ativo.";
+  } else {
+    msg.innerText = "❌ Código inválido.";
+  }
+}
+</script>
